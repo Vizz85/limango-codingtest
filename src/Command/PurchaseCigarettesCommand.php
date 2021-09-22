@@ -33,23 +33,33 @@ class PurchaseCigarettesCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $itemCount = (int) $input->getArgument('packs');
-        $amount = (float) \str_replace(',', '.', $input->getArgument('amount'));
+		try {
+	        $itemCount = (int) $input->getArgument('packs');
+	        $amount = (float) \str_replace(',', '.', $input->getArgument('amount'));
 
-		$purchaseTransaction = new PurchaseTransaction($itemCount, $amount);
+			$purchaseTransaction = new PurchaseTransaction($itemCount, $amount);
 
-		$cigaretteMachine = new CigaretteMachine();
-	    $purchasedItem = $cigaretteMachine->execute($purchaseTransaction);
+			$cigaretteMachine = new CigaretteMachine();
+		    $purchasedItem = $cigaretteMachine->execute($purchaseTransaction);
 
-        $output->writeln('You bought <info>'.$purchasedItem->getItemQuantity().'</info> packs of cigarettes for <info>-'.$purchasedItem->getTotalAmount().'€</info>, each for <info>-'.CigaretteMachine::ITEM_PRICE.'€</info>.');
-        $output->writeln('Your change is:');
+			$purchasedItemQuantity = $purchasedItem->getItemQuantity();
 
-        $table = new Table($output);
-        $table
-            ->setHeaders(array('Coins', 'Count'))
-            ->setRows($purchasedItem->getChange())
-        ;
-        $table->render();
+			if ($purchasedItemQuantity > 0) {
+				$output->writeln('You bought <info>'.$purchasedItemQuantity.'</info> packs of cigarettes for <info>-'.$purchasedItem->getTotalAmount().'€</info>, each for <info>-'.CigaretteMachine::ITEM_PRICE.'€</info>.');
+			} else {
+				$output->writeln('You bought no cigarettes.');
+			}
 
+	        $output->writeln('Your change is:');
+
+	        $table = new Table($output);
+	        $table
+	            ->setHeaders(array('Coins', 'Count'))
+	            ->setRows($purchasedItem->getChange())
+	        ;
+	        $table->render();
+		} catch(\Exception $e) {
+			$output->writeln($e->getMessage());
+		}
     }
 }
